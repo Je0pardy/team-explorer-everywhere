@@ -265,7 +265,7 @@ public class StandardListenerList implements ListenerList {
     private static class ListenerNode {
         public final Object listener;
         public final Comparator listenerComparator;
-        public final ListenerNode next;
+        public ListenerNode next;
 
         public ListenerNode(final Object listener, final Comparator listenerComparator, final ListenerNode next) {
             this.listener = listener;
@@ -292,22 +292,23 @@ public class StandardListenerList implements ListenerList {
         }
 
         public boolean addListener(final Object listenerToAdd, final ListenerNodeHolder holder) {
-            if (listenerComparator.compare(listener, listenerToAdd) == 0) {
-                return false;
-            }
+            ListenerNode currentNode = this;
 
-            if (next == null) {
-                final ListenerNode node = new ListenerNode(listenerToAdd, listenerComparator, null);
-                holder.setNode(new ListenerNode(listener, listenerComparator, node));
-                return true;
-            } else {
-                if (next.addListener(listenerToAdd, holder)) {
-                    holder.setNode(new ListenerNode(listener, listenerComparator, holder.getNode()));
-                    return true;
-                } else {
+            while (currentNode != null) {
+                if (listenerComparator.compare(currentNode.listener, listenerToAdd) == 0) {
                     return false;
                 }
+
+                if (currentNode.next == null) {
+                    currentNode.next = new ListenerNode(listenerToAdd, listenerComparator, null);
+                    holder.setNode(this);
+                    return true;
+                }
+
+                currentNode = currentNode.next;
             }
+
+            return false;
         }
     }
 
